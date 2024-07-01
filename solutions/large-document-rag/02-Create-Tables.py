@@ -76,6 +76,11 @@ llm_config = model_config.get("llm_config")
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC
+
+# COMMAND ----------
+
 # DBTITLE 1,Get Service Principal
 from databricks.sdk import WorkspaceClient
 

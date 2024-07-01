@@ -62,7 +62,7 @@ timestamp_col= "timestamp"
 
 # COMMAND ----------
 
-# DBTITLE 1,Configuraion .yaml
+# DBTITLE 1,Configuration .yaml
 # Define configuraion
 rag_chain_config = {
     "databricks_resources": {
