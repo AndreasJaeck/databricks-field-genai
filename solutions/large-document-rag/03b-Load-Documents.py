@@ -26,9 +26,12 @@
 
 import os
 import mlflow
+from databricks.sdk import WorkspaceClient
+
+w = WorkspaceClient()
 
 #Get the conf from the local conf file
-model_config = mlflow.models.ModelConfig(development_config='config/rag_chain_config.yaml')
+model_config = mlflow.models.ModelConfig(development_config=f'/Workspace/Users/{w.current_user.me().user_name}/databricks-field-genai/solutions/large-document-rag/config/rag_chain_config.yaml')
 
 databricks_resources = model_config.get("databricks_resources")
 secrets_config = model_config.get("secrets_config")
@@ -124,7 +127,6 @@ df_parent_split = spark.table(databricks_resources.get("parent_table"))
 new_documents = df_documents.join(df_parent_split, df_parent_split.document_id == df_documents.document_id, "left_outer") \
     .filter(df_parent_split.document_id.isNull()) \
     .select(df_documents["*"])
-
 
 # COMMAND ----------
 
@@ -383,7 +385,7 @@ pipeline_updater = PipelineUpdater(w)
 from concurrent.futures import ThreadPoolExecutor
 
 def update_pipeline_online_table():
-    pipeline_id = w.online_tables.get(f"{databricks_resources.get('parent_table')}_online").spec.
+    pipeline_id = w.online_tables.get(f"{databricks_resources.get('parent_table')}_online").spec.pipeline_id
     pipeline_updater.update_pipeline_if_needed(pipeline_id)
 
 def update_pipeline_vector_search_index():
