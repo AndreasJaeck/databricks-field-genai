@@ -13,7 +13,7 @@
 
 # COMMAND ----------
 
-# MAGIC %pip install --quiet -U databricks-agents mlflow-skinny mlflow mlflow[gateway] langchain==0.2.1 langchain_core==0.2.5 langchain_community==0.2.4 databricks-vectorsearch databricks-sdk==0.23.0
+# MAGIC %pip install --quiet -U databricks-agents mlflow-skinny mlflow mlflow[gateway]
 # MAGIC dbutils.library.restartPython()
 
 # COMMAND ----------
@@ -34,7 +34,7 @@ config_name= "rag_chain_config"
 # Table/Volume Names 
 # ---------------------------
 catalog = "dbdemos_aj" # adjust to use correct catalog
-schema = "dbdemos_large_document_rag" # adjust to create unique db 
+schema = "dbdemos_large_document_rag" # adjust to write to the correct db 
 
 
 # Endpoint Names
@@ -43,21 +43,35 @@ vector_search_endpoint_name = "one-env-shared-endpoint-2"
 llm_endpoint_name = "databricks-dbrx-instruct"
 embedding_endpoint_name = "databricks-bge-large-en"
 
+# Rag Chain Model Name
+#----------------------------
+rag_chain_model_name = "chain_model"
+
+
 # Doc Splitting
 # ---------------------------
 # Using 8k tokens for parent chunk size, since LLM attention is decreasing quickyly with larger windows.
-n_child_tokens = 1024
+n_child_tokens = 1024 
 n_parent_tokens = n_child_tokens * 8
 
-# Table Schema (please adjust only if really necessary)
+
+# Table Schema
 # ---------------------------
-text_col = "content"
-document_uri = "url"
-document_name_col = "document_name"
-document_id_col = "document_id"
-parent_document_id_col = "parent_split_id"
-child_document_id_col = "child_split_id"
-timestamp_col= "timestamp"
+# (please adjust only if really necessary)
+
+text_col = "content" # col that contain the actual natural language
+document_uri = "url" # the path to the document (can be a path to a url)
+document_name_col = "document_name" # col that contain the name of the document (used for filtering)
+document_id_col = "document_id" # col that contain the unique id of the document
+parent_document_id_col = "parent_split_id" # col that contain the unique id of the parent document
+child_document_id_col = "child_split_id" # col that contain the unique id of the child document
+timestamp_col= "timestamp" # name of timestamp column
+
+# ---------------------------
+# (please adjust only if really necessary)
+
+document_table_posfix = "documents"
+document_feature_spec = "parent_document_spec"
 
 
 # COMMAND ----------
@@ -73,20 +87,37 @@ rag_chain_config = {
         "embedding_endpoint_name": embedding_endpoint_name,
         "feature_serving_endpoint_name": f"{schema}-parent-splits",
         "rag_chain_endpoint_name": f"{schema}-chain",
+        "rag_chain_model_name": rag_chain_model_name,
         "source_volume": "source_data",
         "checkpoint_volume": "checkpoints",
         "source_volume_path": f"/Volumes/{catalog}/{schema}/source_data/text",
         "checkpoint_volume_path": f"/Volumes/{catalog}/{schema}/checkpoints",
-        "document_table": f"{catalog}.{schema}.documents",
-        "parent_table": f"{catalog}.{schema}.documents_parent_splits",
-        "child_table": f"{catalog}.{schema}.documents_child_splits",
-        "vector_search_index": f"{catalog}.{schema}.documents_child_splits_index",
+        "document_table": f"{catalog}.{schema}.{document_table_posfix}",
+        "parent_table": f"{catalog}.{schema}.{document_table_posfix}_parent_splits",
+        "child_table": f"{catalog}.{schema}.{document_table_posfix}_child_splits",
+        "vector_search_index": f"{catalog}.{schema}.{document_table_posfix}_child_splits_index",
+        "document_feature_spec_uri": f"{catalog}.{schema}.{document_feature_spec}",
+        "document_feature_spec": document_feature_spec,
         "host": "https://" + spark.conf.get("spark.databricks.workspaceUrl"),
     },
     "secrets_config": {"secret_scope": "dbdemos", "secret_key": "rag_sp_token"},
     "input_example": {
         "messages": [
-            {"content": "What is Databricks Lakehouse Platform?", "role": "user"}
+            {
+                "content": "What are the conditions of my insurance?",
+                "role": "user",
+                "filter": "All Documents",
+            },
+            {
+                "content": "The conditions can vary based on the specic type of insurance",
+                "role": "assistant",
+                "filter": "All Documents",
+            },
+            {
+                "content": "Tell me about the travel cancellation insurance.",
+                "role": "user",
+                "filter": "Travel-Cancellation-Insurance",
+            },
         ]
     },
     "llm_config": {
@@ -127,12 +158,16 @@ rag_chain_config = {
         },
         "chunk_template": "Passage: {chunk_text}\n",
         "data_pipeline_tag": "poc",
-        "parameters": {"k": 5, "query_type": "ann"},
-        "embedding_dimension": 1024 
+        "parameters": {"k": 3},
+        "embedding_dimension": 1024,
     },
 }
 try:
-    with open(f"config/{config_name}.yaml", "w") as f:
+    with open(f"{config_name}.yaml", "w") as f:
         yaml.dump(rag_chain_config, f)
 except:
     print("pass to work on build job")
+
+# COMMAND ----------
+
+
