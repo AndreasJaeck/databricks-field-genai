@@ -18,13 +18,13 @@ Many industries possess extensive knowledge bases but struggle to leverage that 
 
 ### Vector Databases vs Large Context Windows
 
-![Vector Databases vs Large Context Windows](img/hybrid-rag.webp)
+![Vector Databases vs Large Context Windows](img/vector-db-vs-large-context.webp)
 
 Our hybrid approach leverages the strengths of both techniques, providing a robust and flexible solution for handling large documents and specific queries that need to find the proverbial needle in the haystack.
 
 ### Architecture
 
-![RAG Solution Architecture](img/vector-db-vs-large-context.webp)
+![RAG Solution Architecture](img/hybrid-rag.webp)
 
 Our proposed solution architecture combines the power of vector databases and large context windows to create a robust and efficient RAG system:
 
