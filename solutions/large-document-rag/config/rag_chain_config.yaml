@@ -1,23 +1,33 @@
 databricks_resources:
-  catalog: dbdemos_aj
+  catalog: dbdemos_merve
   checkpoint_volume: checkpoints
-  checkpoint_volume_path: /Volumes/dbdemos_aj/dbdemos_large_document_rag/checkpoints
-  child_table: dbdemos_aj.dbdemos_large_document_rag.documents_child_splits
-  document_table: dbdemos_aj.dbdemos_large_document_rag.documents
+  checkpoint_volume_path: /Volumes/dbdemos_merve/dbdemos_large_document_rag/checkpoints
+  child_table: dbdemos_merve.dbdemos_large_document_rag.documents_child_splits
+  document_feature_spec: parent_document_spec
+  document_feature_spec_uri: dbdemos_merve.dbdemos_large_document_rag.parent_document_spec
+  document_table: dbdemos_merve.dbdemos_large_document_rag.documents
   embedding_endpoint_name: databricks-bge-large-en
   feature_serving_endpoint_name: dbdemos_large_document_rag-parent-splits
   host: https://e2-demo-field-eng.cloud.databricks.com
   llm_endpoint_name: databricks-dbrx-instruct
-  parent_table: dbdemos_aj.dbdemos_large_document_rag.documents_parent_splits
+  parent_table: dbdemos_merve.dbdemos_large_document_rag.documents_parent_splits
   rag_chain_endpoint_name: dbdemos_large_document_rag-chain
+  rag_chain_model_name: chain_model
   schema: dbdemos_large_document_rag
   source_volume: source_data
-  source_volume_path: /Volumes/dbdemos_aj/dbdemos_large_document_rag/source_data/text
+  source_volume_path: /Volumes/dbdemos_merve/dbdemos_large_document_rag/source_data/text
   vector_search_endpoint_name: one-env-shared-endpoint-2
-  vector_search_index: dbdemos_aj.dbdemos_large_document_rag.documents_child_splits_index
+  vector_search_index: dbdemos_merve.dbdemos_large_document_rag.documents_child_splits_index
 input_example:
   messages:
-  - content: What is Databricks Lakehouse Platform?
+  - content: What are the conditions of my insurance?
+    filter: All Documents
+    role: user
+  - content: The conditions can vary based on the specic type of insurance
+    filter: All Documents
+    role: assistant
+  - content: Tell me about the travel cancellation insurance.
+    filter: Travel-Cancellation-Insurance
     role: user
 llm_config:
   llm_parameters:
@@ -45,7 +55,9 @@ retriever_config:
     primary_key: child_split_id
     text_col: content
     timestamp_col: timestamp
-  chunk_template: 'Passage: {chunk_text}'
+  chunk_template: 'Passage: {chunk_text}
+
+    '
   data_pipeline_tag: poc
   document_table_schema:
     document_name_col: document_name
@@ -57,8 +69,7 @@ retriever_config:
   n_child_tokens: 1024
   n_parent_tokens: 8192
   parameters:
-    k: 5
-    query_type: ann
+    k: 3
   parent_splits_table_schema:
     document_foreign_key: document_id
     document_name_col: document_name
