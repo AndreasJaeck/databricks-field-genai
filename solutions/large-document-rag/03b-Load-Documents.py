@@ -383,7 +383,7 @@ pipeline_updater = PipelineUpdater(w)
 from concurrent.futures import ThreadPoolExecutor
 
 def update_pipeline_online_table():
-    pipeline_id = w.online_tables.get(f"{databricks_resources.get('parent_table')}_online").spec.
+    pipeline_id = w.online_tables.get(f"{databricks_resources.get('parent_table')}_online").spec.pipeline_id
     pipeline_updater.update_pipeline_if_needed(pipeline_id)
 
 def update_pipeline_vector_search_index():
