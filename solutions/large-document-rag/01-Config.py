@@ -33,7 +33,7 @@ config_name= "rag_chain_config"
 
 # Table/Volume Names 
 # ---------------------------
-catalog = "dbdemos_aj" # adjust to use correct catalog
+catalog = "dbdemos_merve" # adjust to use correct catalog
 schema = "dbdemos_large_document_rag" # adjust to write to the correct db 
 
 
