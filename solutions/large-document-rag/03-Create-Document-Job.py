@@ -1,9 +1,22 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC
-# MAGIC Excuting this notebook will create a job that will load .txt files from Volume, processes and syncs to the online table and vector index. 
+# MAGIC This notebook creates a job to load, process, and sync .txt files from the Volume to the online table and vector index.
 # MAGIC
-# MAGIC AJ: The Code that need's to be run is in 03b-Load-Documents
+# MAGIC Steps to Execute:
+# MAGIC 1. Ensure your parameters are set according to your setup.
+# MAGIC 2. Note that this job will be run by the Service Principal. You must add the git credentials to that Service Principal.
+# MAGIC
+# MAGIC Key Points:
+# MAGIC - The main code to be executed is located in 03b-Load-Documents.
+# MAGIC - The job is triggered when new files are dropped into the source volume path.
+# MAGIC - The task will launch a cluster to chunk the documents and load them into parent and child tables.
+# MAGIC - Two DLT (Data Lakehouse Tool) pipelines will follow:
+# MAGIC   1. Update the child vector search index.
+# MAGIC   2. Update the parent online table.
+# MAGIC
+# MAGIC Please follow these instructions carefully to ensure proper execution.
+# MAGIC
 
 # COMMAND ----------
 
@@ -50,7 +63,9 @@ from databricks.sdk.service import jobs
 
 # Be aware that this job will be run by the Service Principal and that you need to add the git credentials to that Service Principal 
 
-# This job config will create a job that is triggered when new files are droped into the source volume path. Task will launch a cluster that is chunking the documents and loading them into parent and child tables. Followed by two dlt pieplines to update the child vector search index and the parent online table.  
+# This job config will create a job that is triggered when new files are droped into the source volume path. Task will launch a cluster that is chunking the documents and loading them into parent and child tables. Followed by two dlt pieplines to update the child vector search index and the parent online table. 
+
+# Please update run_as user_name according to your setup.
 job_config = {
   "name": f"{databricks_resources.get('schema')}_update_documents",
   "email_notifications": {
@@ -155,7 +170,7 @@ job_config = {
     "enabled": True
   },
   "run_as": {
-    "user_name": "andreas.jack@databricks.com"
+    "user_name": "merve.karali@databricks.com"
   }
 }
 
