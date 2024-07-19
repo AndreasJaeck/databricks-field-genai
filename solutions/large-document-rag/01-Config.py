@@ -163,7 +163,7 @@ rag_chain_config = {
     },
 }
 try:
-    with open(f"config/{config_name}.yaml", "w") as f:
+    with open(f"{config_name}.yaml", "w") as f:
         yaml.dump(rag_chain_config, f)
 except:
     print("pass to work on build job")

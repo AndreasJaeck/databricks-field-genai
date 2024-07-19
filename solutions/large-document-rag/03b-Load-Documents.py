@@ -28,7 +28,7 @@ import os
 import mlflow
 
 #Get the conf from the local conf file
-model_config = mlflow.models.ModelConfig(development_config='config/rag_chain_config.yaml')
+model_config = mlflow.models.ModelConfig(development_config='rag_chain_config.yaml')
 
 databricks_resources = model_config.get("databricks_resources")
 secrets_config = model_config.get("secrets_config")
