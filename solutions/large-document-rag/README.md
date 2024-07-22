@@ -5,6 +5,7 @@
 * [About this Solution Accelerator](#about-this-solution-accelerator)
 * [Vector Databases vs Large Context Windows](#vector-databases-vs-large-context-windows)
 * [Structure](#structure)
+* [Prerequistes](#prerequistes)
 * [Architecture](#architecture)
 * [Disclaimer](#disclaimer)
 * [Outlook](#outlook)
@@ -77,8 +78,8 @@ This notebook will generate the required tables in Unity Catalog (UC).
 #### [03-Create-Document-Job](./03-Create-Document-Job.py) 
 This notebook is used to create a triggered job that will run when new files have been added to the `text` folder of the `source_data` Volume. When the job starts, it will only add new documents to the solution. Please be aware that removing documents from the `text` folder will not erase these documents from the RAG solution. Also be aware that different file names with the same content will duplicate content in the RAG solution. 
 * Step 1: Update parameters about your version control system and path to forked repository.
-* Step 2: Add the user name (e-mail) that is running the job. It is recommended to add the Service Principal as the user for the job. But be aware that this job is running from the forked git repository and that you need to add the git credentials to the Service Principal (reach out to Workspace Admin) first.
-* Step 3: Run the notebook and check if the job has been created under workflows. Use the pipeline that is shown as output to find the job in workflows. You can check if the job is working properly by adding a new text file to the `text` folder. This should start the job, and when completed, you will be able to find the content in documents, parent_splits, and child_splits tables.  
+* Step 2: Add the user name (e-mail/identity) that is running the job. It is recommended to add the Service Principal as the user for the job. But be aware that this job is running from the forked git repository and that you need to add the git credentials to the Service Principal (reach out to Workspace Admin) first.
+* Step 3: Run the notebook and check if the job has been created under workflows. Use the pipeline id that is shown as output to find the job in workflows. You can check if the job is working properly by adding a new text file to the `text` folder. This should start the job, and when completed, you will be able to find the content in documents, parent_splits, and child_splits tables.  
 
 #### [03b-Load-Documents](./03b-Load-Documents.py)
 This notebook is used by [03-Create-Document-Job](./03-Create-Document-Job.py) as the actual update code that is run when the update pipeline is triggered. 
