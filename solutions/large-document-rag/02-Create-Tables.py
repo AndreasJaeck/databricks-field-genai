@@ -67,17 +67,12 @@ import os
 import mlflow
 
 #Get the conf from the local conf file
-model_config = mlflow.models.ModelConfig(development_config='config/rag_chain_config.yaml')
+model_config = mlflow.models.ModelConfig(development_config='rag_chain_config.yaml')
 
 databricks_resources = model_config.get("databricks_resources")
 secrets_config = model_config.get("secrets_config")
 retriever_config = model_config.get("retriever_config")
 llm_config = model_config.get("llm_config")
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC
 
 # COMMAND ----------
 
@@ -123,10 +118,12 @@ spark.sql(f"CREATE VOLUME IF NOT EXISTS `{databricks_resources.get('checkpoint_v
 
 # COMMAND ----------
 
-# ToDo: Add the text directory create
-folder_path = f"{databricks_resources.get('source_volume')}/text"
-dbutils.fs.mkdirs(folder_path)
-
+# MAGIC %md
+# MAGIC #### **Attention!** 
+# MAGIC Please navigate to the volume in he specified catalog and schema by clicking on the Catalog button and add the folder ```text``` to the ```source_data```volume. 
+# MAGIC
+# MAGIC ```#ToDo: Add some code that will create folder in volume.```
+# MAGIC
 
 # COMMAND ----------
 
@@ -214,6 +211,8 @@ CREATE OR REPLACE TABLE {databricks_resources.get("child_table")} (
 # MAGIC %md
 # MAGIC
 # MAGIC ## Create Online Stores 
+# MAGIC
+# MAGIC For low latency access we put the data in the Delta Tables into very fast key-value store and vector-database. 
 
 # COMMAND ----------
 

@@ -207,7 +207,7 @@ except Exception as e:
 # MAGIC         """
 # MAGIC         
 # MAGIC         # Generate embedding vector from query content
-# MAGIC         if "content" in query or :
+# MAGIC         if "content" in query:
 # MAGIC             embedding_vector = self.embedding_model.embed_query(query["content"])
 # MAGIC         else:
 # MAGIC             embedding_vector = self.embedding_model.embed_query(query)
@@ -269,7 +269,7 @@ except Exception as e:
 # MAGIC
 # MAGIC ## Create Q&A Chain
 # MAGIC
-# MAGIC If you want to use a simple Q&A chain use the code below. If you need a full conversational chain jumpt to conversation chain chapter.
+# MAGIC If you want to use a simple Q&A chain use the code below. If you need a full conversational chain jump to conversational chain chapter.
 
 # COMMAND ----------
 
@@ -341,7 +341,7 @@ except Exception as e:
 # MAGIC     vs_index=vs_index,
 # MAGIC     embedding_model=embedding_model,
 # MAGIC     deploy_client=deploy_client,
-# MAGIC     feature_endpoint_name=databricks_resources.get("rag_chain_endpoint_name"), #TODO: Change to feature serving endpoint name
+# MAGIC     feature_endpoint_name=databricks_resources.get("feature_serving_endpoint_name"), 
 # MAGIC     parent_id_key=parent_splits_table_schema.get("primary_key"),
 # MAGIC     content_col=parent_splits_table_schema.get("text_col"),
 # MAGIC     filter_col=parent_splits_table_schema.get("document_name_col"),
@@ -602,6 +602,8 @@ except Exception as e:
 
 # MAGIC %md
 # MAGIC ## Log model 
+# MAGIC
+# MAGIC The following code block will log the langchain and the dependencies. The default for ```lc_model```parameter is ```conversational_chain.py```. If you want to use a simple Q&A chain you can also use ```chain.py```. But be aware that the front-end app is currently build for conversational chains only. 
 
 # COMMAND ----------
 
@@ -612,13 +614,13 @@ mlflow.set_registry_uri("databricks-uc")
 # Create the model registry in Unity Catalog
 registered_model_name = f"{databricks_resources.get('catalog')}.{databricks_resources.get('schema')}.conv_chain_model"
 
-# The agent framework can't handle an additional filter criteria at the current stage. That's why we log the model without filter. Still, filters are supported by the model serving endpoint.
+# The agent framework can't handle an additional filter criteria at the current stage. That's why we log the model input example without the filter. Still, filters are supported by the model serving endpoint.
 input_example = {
         "messages": [{"content": "What are the conditions of my travel cancellation insurance?", "role": "user"}]
     }
 
 # Log the model to MLflow
-with mlflow.start_run(run_name=f"dbdemos_hybrid_rag_conversational") as l:
+with mlflow.start_run(run_name=f"large_doc_rag_conversational") as l:
     logged_chain_info = mlflow.langchain.log_model(
         lc_model=os.path.join(os.getcwd(), 'src/conversational_chain.py'),  # Chain code file e.g., /path/to/the/chain.py 
         model_config='rag_chain_config.yaml',  # Chain configuration 
@@ -710,7 +712,7 @@ registered_model_name = f"{databricks_resources.get('catalog')}.{databricks_reso
 
 from databricks import agents
 
-user_list = ['<email adress>'] # Add user's that will have access to the review App
+user_list = ['<email adress>'] # Add user's that will have access to the review App. This requires that user e-mail is part of the SSO Directory. 
 
 # Set the permissions.
 agents.set_permissions(model_name=registered_model_name, users=user_list, permission_level=agents.PermissionLevel.CAN_QUERY)

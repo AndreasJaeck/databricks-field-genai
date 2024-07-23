@@ -33,20 +33,25 @@ config_name= "rag_chain_config"
 
 # Table/Volume Names 
 # ---------------------------
-catalog = "dbdemos_aj" # adjust to use correct catalog
-schema = "dbdemos_large_document_rag" # adjust to write to the correct db 
+catalog = "<put catalog name here>" # adjust to use correct catalog/ will be generated if not exist
+schema = "<put database name here>" # adjust to write to the correct db / will be generated if not exist
 
 
 # Endpoint Names
 # ---------------------------
-vector_search_endpoint_name = "one-env-shared-endpoint-2"
-llm_endpoint_name = "databricks-dbrx-instruct"
-embedding_endpoint_name = "databricks-bge-large-en"
+vector_search_endpoint_name = "<put vector search endpoint here>"# Please create Vector Search Endpoint through UI if no Endpoint exists. 
+llm_endpoint_name = "<name of the llm serving endpoint>"# Pay-per-token endpoints are probabaly the easiest to start with. If you don't have access you can integrate an external endpoint (like OpenAI) or host your own LLM with Throughput Serving. Check on Serving tab (left bottom corner) which Endpoints are available. 
+embedding_endpoint_name = "<name of the embedding model endpoint>"#  Name of the embedding model. Powerful models are available on Databricks Marketplace and can get deployed as a serving endpoint with less hardware requirements compared to LLM-serving. 
+
+
+# Service Principal Secret Params
+#----------------------------
+secret_scope = "rag-sp"
+secret_key = "rag_sp_token"
 
 # Rag Chain Model Name
 #----------------------------
 rag_chain_model_name = "chain_model"
-
 
 # Doc Splitting
 # ---------------------------
@@ -59,7 +64,7 @@ n_parent_tokens = n_child_tokens * 8
 # ---------------------------
 # (please adjust only if really necessary)
 
-text_col = "content" # col that contain the actual natural language
+text_col = "content" # col that contains the actual natural language/text
 document_uri = "url" # the path to the document (can be a path to a url)
 document_name_col = "document_name" # col that contain the name of the document (used for filtering)
 document_id_col = "document_id" # col that contain the unique id of the document
@@ -100,7 +105,7 @@ rag_chain_config = {
         "document_feature_spec": document_feature_spec,
         "host": "https://" + spark.conf.get("spark.databricks.workspaceUrl"),
     },
-    "secrets_config": {"secret_scope": "dbdemos", "secret_key": "rag_sp_token"},
+    "secrets_config": {"secret_scope": secret_scope, "secret_key": secret_key},
     "input_example": {
         "messages": [
             {
@@ -116,12 +121,12 @@ rag_chain_config = {
             {
                 "content": "Tell me about the travel cancellation insurance.",
                 "role": "user",
-                "filter": "Travel-Cancellation-Insurance",
+                "filter": "All Documents",
             },
         ]
     },
     "llm_config": {
-        "llm_parameters": {"max_tokens": 1500, "temperature": 0.01},
+        "llm_parameters": {"max_tokens": 3000, "temperature": 0.01},
         "llm_prompt_template": "You are a trusted assistant that helps answer questions based only on the provided information. If you do not know the answer to a question, you truthfully say you do not know.  Here is some context which might or might not help you answer: {context}.  Answer directly, do not repeat the question, do not start with something like: the answer to the question, do not add AI in front of your answer, do not say: here is the answer, do not mention the context or the question. Based on this context, answer this question: {question}",
         "llm_prompt_template_variables": ["context", "question"],
     },
@@ -167,7 +172,3 @@ try:
         yaml.dump(rag_chain_config, f)
 except:
     print("pass to work on build job")
-
-# COMMAND ----------
-
-
