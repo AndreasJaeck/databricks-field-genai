@@ -1,11 +1,13 @@
 # Databricks notebook source
 # MAGIC %md
+# MAGIC # 03-Create-Document-Job
 # MAGIC
 # MAGIC This notebook creates a job to load, process, and sync .txt files from the Volume to the online table and vector index.
 # MAGIC
 # MAGIC Steps to Execute:
-# MAGIC 1. Ensure your parameters are set according to your setup.
-# MAGIC 2. Note that this job will be run by the Service Principal. You must add the git credentials to that Service Principal.
+# MAGIC * 1. Ensure your parameters are set according to your setup.
+# MAGIC * 2. Note that this job will run on the forked git repository. The user or Service Principal running the created job (check parameter ```user_name```) will need git credentials. Please reach out to workspace admin to get these git credentials assigned. 
+# MAGIC * 3. Make sure that ```rag_chain_config.yaml``` already exists in the branch the job will run from. The notebook ```03b-Load-Documents``` needs to load the configuration from the ```.yaml```.
 # MAGIC
 # MAGIC Key Points:
 # MAGIC - The main code to be executed is located in 03b-Load-Documents.
@@ -22,16 +24,6 @@
 
 # MAGIC %pip install --quiet -U databricks-agents mlflow-skinny mlflow mlflow[gateway]
 # MAGIC dbutils.library.restartPython()
-
-# COMMAND ----------
-
-# Please change parameters according to your setup!
-git_provider = "gitHub"
-git_repo = "https://github.com/AndreasJaeck/databricks-field-genai.git"
-git_branch = "feature/trigger-run-with-sp-from-git-source"
-notebook_path = "solutions/large-document-rag/03b-Load-Documents"
-
-# Be aware that this job will be run by the Service Principal and that you need to add the git credentials to that Service Principal 
 
 # COMMAND ----------
 
@@ -59,13 +51,23 @@ print(f"Service Principal ID: {sp_id}")
 
 # COMMAND ----------
 
+# Please change parameters according to your setup!
+git_provider = "gitHub" # Put your own git provider
+git_repo = "https://github.com/AndreasJaeck/databricks-field-genai.git" # Path to the forked repository in your git provider
+git_branch = "release" # Branch to be used
+notebook_path = "solutions/large-document-rag/03b-Load-Documents" # Path to the notebook that contains the code that will run during job execution
+
+# The etl job will run from git source, if you want to run this job with the Service Principal, you need to add the git credentials to that Service Principal first! Please reach out to the Workspace Admin. 
+user_name = '<add the user name here>'
+
+zone_id = 'us-west-2a' # Update the availablity zone in which the job needs to run. 
+
+# COMMAND ----------
+
 from databricks.sdk.service import jobs
 
-# Be aware that this job will be run by the Service Principal and that you need to add the git credentials to that Service Principal 
+# This job config will create a job that is triggered when new files are droped into text folder of the source volume path. Task will launch a cluster that is chunking the documents and loading them into parent and child tables. Followed by two dlt pipelines to update the child vector search index and the parent online table. 
 
-# This job config will create a job that is triggered when new files are droped into the source volume path. Task will launch a cluster that is chunking the documents and loading them into parent and child tables. Followed by two dlt pieplines to update the child vector search index and the parent online table. 
-
-# Please update run_as user_name according to your setup.
 job_config = {
   "name": f"{databricks_resources.get('schema')}_update_documents",
   "email_notifications": {
@@ -149,7 +151,7 @@ job_config = {
         "aws_attributes": {
           "first_on_demand": 1,
           "availability": "SPOT_WITH_FALLBACK",
-          "zone_id": "us-west-2a",
+          "zone_id": zone_id,
           "spot_bid_price_percent": 100,
           "ebs_volume_count": 0
         },
@@ -170,7 +172,7 @@ job_config = {
     "enabled": True
   },
   "run_as": {
-    "user_name": "merve.karali@databricks.com"
+    "user_name": user_name
   }
 }
 
@@ -231,3 +233,7 @@ def create_databricks_job(job_config):
 job_id = create_databricks_job(job_config)
 if job_id:
     print(f"Created job with ID: {job_id}")
+
+# COMMAND ----------
+
+
