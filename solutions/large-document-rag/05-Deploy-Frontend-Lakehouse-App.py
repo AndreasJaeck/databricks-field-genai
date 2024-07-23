@@ -39,7 +39,7 @@
 import os
 import mlflow
 
-#Get the conf from the local conf file
+#Get the configuration
 model_config = mlflow.models.ModelConfig(development_config='rag_chain_config.yaml')
 databricks_resources = model_config.get("databricks_resources")
 retriever_config = model_config.get("retriever_config")
@@ -64,8 +64,8 @@ print(f"Service Principal ID: {sp_id}")
 import yaml
 import os
 
-# Name of the rag chain endpoint
-endpoint_name = 'agents_dbdemos_aj-dbdemos_large_document_rag-conv_chain_mode'
+# Name of the rag chain endpoint (Please update according to your endpoint name!)
+endpoint_name = '<add your langchain endpoint name here!>'
 
 host = databricks_resources.get("host")
 
@@ -89,7 +89,7 @@ except:
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Let's now create or chatbot application using Gradio
+# MAGIC ## Let's now create our chatbot application using Gradio
 
 # COMMAND ----------
 
@@ -182,6 +182,7 @@ print(filter_values)
 # MAGIC     spacing_size=sizes.spacing_sm,
 # MAGIC )
 # MAGIC
+# MAGIC # Add the filter values from document table here
 # MAGIC filter_values = [
 # MAGIC     "Travel-Cancellation-Insurance",
 # MAGIC     "House-Insurance",
@@ -191,8 +192,8 @@ print(filter_values)
 # MAGIC with gr.Blocks(theme=theme) as demo:
 # MAGIC     gr.Markdown(
 # MAGIC         """
-# MAGIC         # Chat with your Copilot
-# MAGIC         This chatbot is a demo example for the dbdemos llm chatbot. <br>It answers with the help of Documentation saved in a Knowledge database.<br/>This content is provided as a LLM RAG educational example, without support.
+# MAGIC         # Chat with your Contract Copilot
+# MAGIC         This chatbot is a demo example. <br>It answers with the help of Documentation saved in a Knowledge database.<br/>This content is provided as a LLM RAG educational example, without support.
 # MAGIC         """
 # MAGIC     )
 # MAGIC
@@ -234,8 +235,12 @@ print(filter_values)
 
 # COMMAND ----------
 
-# Uncomment this line to run the app local on a public endpoint
-# It is recommend to add a password to your app! 
+demo.launch(share=True)
+
+# COMMAND ----------
+
+# Uncomment this line to run the app local from cluster. 
+# It is recommended to add a password to your app! 
 #demo.launch(share=True)
 
 # COMMAND ----------
@@ -252,6 +257,7 @@ print(filter_values)
 # COMMAND ----------
 
 helper = LakehouseAppHelper()
+# Delete potential previous app version
 helper.delete("large-doc-copilot")
 
 # COMMAND ----------

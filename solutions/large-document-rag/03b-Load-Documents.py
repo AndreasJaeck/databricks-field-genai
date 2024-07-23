@@ -13,7 +13,7 @@
 
 # COMMAND ----------
 
-# MAGIC %pip install --quiet -U databricks-agents mlflow-skinny mlflow mlflow[gateway] langchain==0.2.1 langchain_core==0.2.5 langchain_community==0.2.4 databricks-vectorsearch databricks-sdk==0.23.0
+# MAGIC %pip install --quiet -U mlflow-skinny mlflow mlflow[gateway] langchain==0.2.1 langchain_core==0.2.5 langchain_community==0.2.4 databricks-vectorsearch databricks-sdk==0.23.0
 # MAGIC dbutils.library.restartPython()
 
 # COMMAND ----------
@@ -28,7 +28,7 @@ import os
 import mlflow
 
 #Get the conf from the local conf file
-model_config = mlflow.models.ModelConfig(development_config='config/rag_chain_config.yaml')
+model_config = mlflow.models.ModelConfig(development_config='rag_chain_config.yaml')
 
 databricks_resources = model_config.get("databricks_resources")
 secrets_config = model_config.get("secrets_config")
@@ -315,81 +315,83 @@ df_child_splits.write.format("delta").mode("append").saveAsTable(databricks_reso
 # MAGIC %md
 # MAGIC
 # MAGIC # 02_Sync Online Stores 
+# MAGIC
+# MAGIC The following code is only required if the created job doesn't contain additional tasks to update online table and vector index
 
 # COMMAND ----------
 
 # DBTITLE 1,Class for running and checking pipeline status
-class PipelineUpdater:
-    def __init__(self, workspace_client):
-        self.workspace_client = workspace_client
-
-    def get_current_state(self, pipeline_id):
-        """Retrieve the current state of the pipeline."""
-        return self.workspace_client.pipelines.get(pipeline_id).latest_updates[0].state.value
-
-    def wait_for_final_state(self, pipeline_id):
-        """Wait for the pipeline to reach a final state ('COMPLETED' or 'FAILED')."""
-        current_state = self.get_current_state(pipeline_id)
-        while current_state not in ['COMPLETED', 'CANCELED', 'FAILED']:
-            print(f"Current status: {current_state}. Waiting for completion...")
-            time.sleep(10)  # Wait for 10 seconds before checking the status again
-            current_state = self.get_current_state(pipeline_id)
-        return current_state
-
-    def start_pipeline_update(self, pipeline_id):
-        """Start the pipeline update and wait for it to reach a final state."""
-        print("Starting pipeline update...")
-        up = self.workspace_client.pipelines.start_update(pipeline_id=pipeline_id, full_refresh=True)
-        return self.wait_for_final_state(pipeline_id)
-
-    def update_pipeline_if_needed(self, pipeline_id):
-        """Check the current state and update the pipeline if it's in 'COMPLETED', 'CANCELED' or 'FAILED' state."""
-        current_state = self.get_current_state(pipeline_id)
-        if current_state in ['COMPLETED','CANCELED','FAILED']:
-            final_state = self.start_pipeline_update(pipeline_id)
-        else:
-            print("Pipeline is currently running. Waiting for it to complete...")
-            final_state = self.wait_for_final_state(pipeline_id)
-
-        # Check the final status
-        if final_state == 'COMPLETED':
-            print("Online table update completed successfully.")
-        elif final_state == 'FAILED':
-            print("Online table update failed.")
-            raise Exception("Pipeline update failed.")
-
+#class PipelineUpdater:
+#    def __init__(self, workspace_client):
+#        self.workspace_client = workspace_client
+#
+#    def get_current_state(self, pipeline_id):
+#        """Retrieve the current state of the pipeline."""
+#        return self.workspace_client.pipelines.get(pipeline_id).latest_updates[0].state.value
+#
+#    def wait_for_final_state(self, pipeline_id):
+#        """Wait for the pipeline to reach a final state ('COMPLETED' or 'FAILED')."""
+#        current_state = self.get_current_state(pipeline_id)
+#        while current_state not in ['COMPLETED', 'CANCELED', 'FAILED']:
+#            print(f"Current status: {current_state}. Waiting for completion...")
+#            time.sleep(10)  # Wait for 10 seconds before checking the status again
+#            current_state = self.get_current_state(pipeline_id)
+#        return current_state
+#
+#    def start_pipeline_update(self, pipeline_id):
+#        """Start the pipeline update and wait for it to reach a final state."""
+#        print("Starting pipeline update...")
+#        up = self.workspace_client.pipelines.start_update(pipeline_id=pipeline_id, full_refresh=True)
+#        return self.wait_for_final_state(pipeline_id)
+#
+#    def update_pipeline_if_needed(self, pipeline_id):
+#        """Check the current state and update the pipeline if it's in 'COMPLETED', 'CANCELED' or 'FAILED' state."""
+#        current_state = self.get_current_state(pipeline_id)
+#        if current_state in ['COMPLETED','CANCELED','FAILED']:
+#            final_state = self.start_pipeline_update(pipeline_id)
+#        else:
+#            print("Pipeline is currently running. Waiting for it to complete...")
+#            final_state = self.wait_for_final_state(pipeline_id)
+#
+#        # Check the final status
+#        if final_state == 'COMPLETED':
+#            print("Online table update completed successfully.")
+#        elif final_state == 'FAILED':
+#            print("Online table update failed.")
+#            raise Exception("Pipeline update failed.")
+#
 
 # COMMAND ----------
 
 # DBTITLE 1,Get workspace client
-from databricks.sdk import WorkspaceClient
-import time
-import os
-
-# Get Service Principal Token from secrets service 
-os.environ['DATABRICKS_TOKEN'] = dbutils.secrets.get(secrets_config.get("secret_scope"), secrets_config.get("secret_key"))
-# Get the host from the configuration
-os.environ["DATABRICKS_HOST"] = databricks_resources.get("host")
-
-# Get workspace client
-w = WorkspaceClient(host=os.environ['DATABRICKS_HOST'], token=os.environ['DATABRICKS_TOKEN'])
-
-# Create an instance of PipelineUpdater
-pipeline_updater = PipelineUpdater(w)
+#from databricks.sdk import WorkspaceClient
+#import time
+#import os
+#
+## Get Service Principal Token from secrets service 
+#os.environ['DATABRICKS_TOKEN'] = dbutils.secrets.get(secrets_config.get("secret_scope"), secrets_config.get("secret_key"))
+## Get the host from the configuration
+#os.environ["DATABRICKS_HOST"] = databricks_resources.get("host")
+#
+## Get workspace client
+#w = WorkspaceClient(host=os.environ['DATABRICKS_HOST'], token=os.environ['DATABRICKS_TOKEN'])
+#
+## Create an instance of PipelineUpdater
+#pipeline_updater = PipelineUpdater(w)
 
 # COMMAND ----------
 
 # DBTITLE 1,Run concurrent sync for parent and child online stores
-from concurrent.futures import ThreadPoolExecutor
-
-def update_pipeline_online_table():
-    pipeline_id = w.online_tables.get(f"{databricks_resources.get('parent_table')}_online").spec.
-    pipeline_updater.update_pipeline_if_needed(pipeline_id)
-
-def update_pipeline_vector_search_index():
-    pipeline_id = w.vector_search_indexes.get_index(databricks_resources.get("vector_search_index")).delta_sync_index_spec.pipeline_id
-    pipeline_updater.update_pipeline_if_needed(pipeline_id)
-
-with ThreadPoolExecutor(max_workers=2) as executor:
-    executor.submit(update_pipeline_online_table)
-    executor.submit(update_pipeline_vector_search_index)
+#from concurrent.futures import ThreadPoolExecutor
+#
+#def update_pipeline_online_table():
+#    pipeline_id = w.online_tables.get(f"{databricks_resources.get('parent_table')}_online").spec.pipeline_id
+#    pipeline_updater.update_pipeline_if_needed(pipeline_id)
+#
+#def update_pipeline_vector_search_index():
+#    pipeline_id = w.vector_search_indexes.get_index(databricks_resources.get("vector_search_index")).delta_sync_index_spec.pipeline_id
+#    pipeline_updater.update_pipeline_if_needed(pipeline_id)
+#
+#with ThreadPoolExecutor(max_workers=2) as executor:
+#    executor.submit(update_pipeline_online_table)
+#    executor.submit(update_pipeline_vector_search_index)
