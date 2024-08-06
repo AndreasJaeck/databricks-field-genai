@@ -59,6 +59,7 @@ The following notebooks will create a Hybrid RAG Chatbot with a Review UI and a 
 
 ### How to use:
 Watch the following videos for a complete guide to the rollout:
+![03-Create-Document-Job](img/03-Create-Document-Job-recording-video.mp4)
 
 #### [01-Config](./01-Config.py)
 This solution leverages a .yaml configuration file to allow for easy updates and adaptation of the solution. 
