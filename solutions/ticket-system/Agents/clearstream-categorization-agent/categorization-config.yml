@@ -1,0 +1,113 @@
+agent_prompt: |
+  '"""Given a tree of categories that MUST follow this exact hierarchical relationship:
+
+  SERVICE_CATEGORY
+  ├── INCIDENT_CATEGORY
+      ├── CAUSE_CATEGORY
+      
+  Where categories can ONLY be combined following the tree structure shown below:
+
+  Cash: Cash related questies regarding pre-adivces of money, withrdrawals of cash, forex exchanges or transfers of cash.
+  ├── New Instruction: Request is received before an instruction
+  │   ├── Deadline: Deadline by when to send the instruction
+  │   └── Formats: Details on how the instruction needs to be formated in order to settle (includes as well paperwork, etc.)
+  ├── Suspense: Request is received when an instruction is pending
+  │   ├── Current Status: Understand what the current status of the instruction is and why it is pending (incl. Formats,  unrecognized entries, etc.)
+  │   ├── Forcing Requests: Can a pending instruction be forced?
+  │   └── Late instruction: Can the late instruction be accepted after deadline?
+  ├── Final: Request is received after an instruction has either settled, is cancelled or rejected
+  │   ├── Cancellation/Rejection: Understand why an instruction has either been rejected or cancelled, eventually how to  reinstruct correctly
+  │   └── Instruction Details: Receive more information on the settled instruction is needed (incl. Unrecognized Entry, etc.)
+  └── General: Non-standard queries
+      ├── Account credit facilities: Why is the account overdrawn? What are the credit limits?
+      ├── Compliance: Compliance topics related to cash
+      └── Currency specifics: What are the cut-of times, paperwork, etc. of a specific currency?
+  
+  Corporate Action: Corporate Actions involve processing, reporting and confirming mandatory, voluntary and mandatory (choice)  events such as stock splits or mergers. Event references start with "AC"
+  ├── Pre-notification: Request is received before an event
+  │   ├── Event Existence: Query on an event which is not announced by Clearstream
+  │   └── Instruction at holder initiative: Client intends to instruct on an event which is not announced by Clearstream
+  ├── Notification sent (MT564): Request is received after the client has been notified via SWIFT
+  │   ├── Client Instruction: What is the current status of the instruction (incl. Formats, lifecycle, etc.)?
+  │   ├── Compensation/Transformation: Queries on compensated/transformed instructions
+  │   ├── Event Details: Clarification on the event is needed (e.g. Dates, Calculation, Paperwork, Options, Events announced but  not offered by CB, etc.)
+  │   └── Proceeds/Payment: Queries on missing proceeds/payment (e.g. delays, entitlement queries, etc.).
+  └── Confirmation sent (MT566): Request is received after the event is closed
+      ├── Compensation/Transformation: Queries on compensated/transformed instructions
+      └── Payment Details: Further details needed on proceeds/payment after a corporate event (e.g. calculation details)
+  
+  Income: Income involves processing, reporting and confirming income events, such as Interests, redemptions and dividends. Event   references start with "00"
+  ├── Pre-notification: Request is received before an event
+  │   └── Event Existence: Query on an event which is not announced by Clearstream
+  ├── Notification sent (MT564): Request is received after the client has been notified via SWIFT
+  │   ├── Compensation/Transformation: Queries on compensated/transformed instructions
+  │   ├── Event Details: Clarification on the event is needed (e.g. Dates, Calculation, Paperwork)
+  │   └── Proceeds/Payment: Queries on missing proceeds/payment (e.g. URF status, delays, entitlement queries, renunciations,   defaults, etc.)
+  └── Confirmation sent (MT566): Request is received after the event is closed
+      ├── Compensation/Transformation: Queries on compensated/transformed instructions
+      ├── Payment Details: Further details needed on proceeds/payment after an income event (e.g. calculation details)
+      └── Reversal: Understand the details of a reversed income event
+  
+  Settlement: Processing of securities transactions, versus payment (RVP/DVP) or free of payment (FOP) of internal, domestic or   against Euroclear (Bridge) settlements
+  ├── New instruction: Request is received before an instruction
+  │   ├── Allegement: Provide details on the counterparty instruction
+  │   └── Formats: Provide details on the instruction needs to be formated in order to settle (includes as well paperwork, etc.)
+  ├── Suspense: Request is received when an instruction is pending
+  │   ├── Allegement: Provide details on the counterparty instruction
+  │   ├── Cancellation request: Regarding the cancellation of a pending instruction
+  │   └── Current status: What is the current status of the instruction (incl. Formats, Unrecognized Entry, etc.)?
+  ├── Final: Request is received after an instruction has either settled, is cancelled or rejected
+  │   ├── Cancellation/Rejection: Understand why an instruction has either been rejected or cancelled, eventually how to  reinstruct correctly
+  │   └── Instruction Details: Receive more information on the settled instruction is needed (incl. Unrecognized Entry, etc.)
+  └── General: Non-standard queries
+      ├── Compliance: Compliance topics related to settlement instructions
+      ├── Foreign Transaction Tax: Question is regarding settlement taxes (SDRT, French/Greek/Spanish Financial Transaction Tax)
+      ├── Market specifications: Local settlement market specific queries (e.g. registered shs., Registration process in Spain,   DTCC chills, etc.)
+      └── Penalties: More details on Settlement Penalties needed
+  
+  New Issues: Creation of new ISIN codes, static data of financial instruments or sydnicated distributions
+  ├── International: ISIN code starts with "XS"
+  │   ├── Code eligibility: Can an ISIN code be setup? Is the code eligible in Clearstream? Can a remote code be opened?
+  │   ├── Financial Instruments static data: Static data query (e.g. minimum tradeable amount (MTA), back-valuation flag, etc.)
+  │   └── Syndicated Distribution: Support on a syndicated distribution needed
+  ├── Domestic - T2S: ISIN codes starts with DE, FR, IT, ES, BE, NL, AT, PT, FI, EE, LV, LT, GR, SI, SK, LU, MT, CY, IE and HR
+  │   ├── Code eligibility: Can an ISIN code be setup? Is the code eligible in Clearstream? Can a remote code be opened?
+  │   └── Financial Instruments static data: Static data query (e.g. minimum tradeable amount (MTA), back-valuation flag, etc.)
+  └── Domestic - outside T2S: All other codes
+      ├── Code eligibility: Can an ISIN code be setup? Is the code eligible in Clearstream? Can a remote code be opened?
+      └── Financial Instruments static data: Static data query (e.g. minimum tradeable amount (MTA), back-valuation flag, etc.)
+  
+  Client Account: Client Account specific queries
+  ├── Account Information: Client Account specific queries
+  │   ├── Account settings: Account setup specifics (31 groups, Extended Recycling, reporting setup, etc.) and how can it be  amended
+  │   ├── Cash Balance: What is the current cash balance?
+  │   ├── Securities Balance: What is the current securities balance?
+  │   ├── Audit Request: Request annual/ad-hoc audit statements
+  │   ├── Client Claim: Used to log a client claim and exchange with the Claims Department
+  │   ├── Client Contingency: How can an order be placed when technical issues on client side prevent usual channels (Indemnity   Letters, Excel Upload, etc.)
+  │   ├── Historical Research: Investigation on historic data which is not available through client connectivity (older than 13   months) anymore.
+  │   ├── Interest Rates: Daily/periodic interest rates
+  │   ├── Reoccuring Reports: All recurrent reports which are send out in regular intervals based on an agreement with the client   and without separate client request. Use for all "Reactive-Reoccuring" reports
+  │   └── Statement Request: Request to receive a certificate/statement of holding
+  └── Billing: Queries regarding invoices, charges, access to the Billing Portal and copies of invoices
+      ├── Billing details: Further explanations on an invoice requested
+      ├── Billing Portal: How to navigate and start the billing portal
+      └── Invoice copy: Request to provide copy of an invoice already send
+
+  Return a JSON object that catgorizes the input according to the input tree and returns the following fields:
+  - service_category
+  - incident_category
+  - cause_category
+  - service_category_reasoning
+  - incident_category_reasoning
+  - service_category_reasoning
+
+  Do not create a new category or return anything else than the specified fields.
+
+  INPUT:
+  """'
+llm_endpoint: "databricks-meta-llama-3-3-70b-instruct"
+input_example:
+  messages:
+    - role: "user"
+      content: "Dear All, We do not recognize below cash entry (Currency/amount and Value date). Please provide us with the necessary documentation in order to assign this cash amount to the correct processing unit. Please note, apart from the ISIN we would like to receive the following: • Evidences which show that this cash entry concerns either a Corporate Action-/Income event or is related to a specific Trade • Any Contract Notes, Trade Confirmations, Notifications or relevant Transaction Breakdowns which the Counterparty is able to produce. • Our references (e.g. GZUXXXXXXXXXXXX) which ties this amount to a specific transaction already confirmed to us."

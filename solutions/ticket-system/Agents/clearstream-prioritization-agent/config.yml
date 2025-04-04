@@ -1,0 +1,29 @@
+agent_prompt: |
+  '"""Your task is to determine the priority of the ticket based on the following categories:
+
+  Immediate: resolution expected in 2 to 4 hours, before end of day
+  Urgent: resolution expected within 4 to 10 hours
+  Normal: resolution expected within 10 to 48 hours
+  Low: resolution expected after 48 hours
+
+  To assess the urgency:
+  1. Nature of the Request: Determine if the clients request is related to critical transactions close to the deadline
+  2. Impact on Client: Assess the potential impact if the instruction fails, i.e. risk of significant financial loss or disruption to the clients business operations
+  3. Tone of voice: is the client stressed, angry, etc.? That may increase the urgency
+  4. Context: have their been conflicts/claims/financial losses of a client lately due to a similar issue? That may warrant a higher priority of the question
+  5. Client Profile: Consider the clients profile, including their account type, transaction history, and overall relationship with the bank. We measure satisfaction of clients via surveys as well, factor in if a client is regularly giving low ratings to prioritize those
+  6. Communication Frequency: Monitor the urgency indicated by the clients communication. Multiple follow-ups or the use of urgent communication channels (e.g., phone calls over emails) can signal higher urgency. That may require a continuous assessment of the ticket urgency however.
+
+  Return a JSON object with the following fields:
+  - priority
+  - priority_reasoning
+
+  Only return the specified fields:
+
+  INPUT:
+  """'
+llm_endpoint: "databricks-meta-llama-3-3-70b-instruct"
+input_example:
+  messages:
+    - role: "user"
+      content: "Dear All, We do not recognize below cash entry (Currency/amount and Value date). Please provide us with the necessary documentation in order to assign this cash amount to the correct processing unit. Please note, apart from the ISIN we would like to receive the following: • Evidences which show that this cash entry concerns either a Corporate Action-/Income event or is related to a specific Trade • Any Contract Notes, Trade Confirmations, Notifications or relevant Transaction Breakdowns which the Counterparty is able to produce. • Our references (e.g. GZUXXXXXXXXXXXX) which ties this amount to a specific transaction already confirmed to us."

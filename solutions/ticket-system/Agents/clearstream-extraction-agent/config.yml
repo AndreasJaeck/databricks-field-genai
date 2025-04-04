@@ -1,0 +1,73 @@
+agent_prompt: |
+  """Extract ticket JSON with these fields when present:
+  - ticket_id: 7-digit number OR [Ticket: 000000000000] (max 12 digits)
+  - customer_first_name, customer_last_name, customer_email
+  - service_category → incident_category → cause_category (must follow hierarchy)
+
+  SERVICE HIERARCHY:
+  Cash:
+    New Instruction: {Deadline, Formats}
+    Suspense: {Current Status, Forcing Requests, Late instruction}
+    Final: {Cancellation/Rejection, Instruction Details}
+    General: {Account credit facilities, Compliance, Currency specifics}
+
+  Corporate Action:
+    Pre-notification: {Event Existence, Instruction at holder initiative}
+    Notification sent (MT564): {Client Instruction, Compensation/Transformation, Event Details, Proceeds/Payment}
+    Confirmation sent (MT566): {Compensation/Transformation, Payment Details}
+
+  Income:
+    Pre-notification: {Event Existence}
+    Notification sent (MT564): {Compensation/Transformation, Event Details, Proceeds/Payment}
+    Confirmation sent (MT566): {Compensation/Transformation, Payment Details, Reversal}
+
+  Settlement:
+    New instruction: {Allegement, Formats}
+    Suspense: {Allegement, Cancellation request, Current status}
+    Final: {Cancellation/Rejection, Instruction Details}
+    General: {Compliance, Foreign Transaction Tax, Market specifications, Penalties}
+
+  New Issues:
+    International: {Code eligibility, Financial Instruments static data, Syndicated Distribution}
+    Domestic - T2S: {Code eligibility, Financial Instruments static data}
+    Domestic - outside T2S: {Code eligibility, Financial Instruments static data}
+
+  Client Account:
+    Account Information: {Account settings, Cash Balance, Securities Balance, Audit Request, Client Claim, Client   Contingency, Historical Research, Interest Rates, Reoccuring Reports, Statement Request}
+    Billing: {Billing details, Billing Portal, Invoice copy}
+
+  COMMON FORMATS:
+  - account_number: 5 alphanumeric (123AB) OR 4/7 digits (1234/1234000)
+  - isin: 2 letter country code + 10 alphanumeric
+  - dates: DD-MM-YYYY
+
+  ADDITIONAL FIELDS IF SERVICE_CATEGORY:
+
+  Client Account:
+  - account_number[]
+
+  Cash:
+  - account_number[], currency (ISO 4217), amount
+
+  Settlement:
+  - account_number[], isin[], settlement_date, trade_date
+
+  Income:
+  - account_number[], isin[], event_indicator (4-chars: INTR/DVCA/BPUT/DFLT)
+  - income_event_reference (16-digits), record_date, ex_date
+
+  Corporate Action:
+  - account_number[], isin[], event_indicator (4-chars)
+  - corporate_action_reference (2-letters+8-digits: AC20375357)
+  - record_date, ex_date
+
+  New Issues:
+  - account_number[], isin[]
+
+  OUTPUT: Valid JSON only and nothing else. Include only fields relevant to detected service_category.
+  """
+llm_endpoint: "databricks-meta-llama-3-3-70b-instruct"
+input_example:
+  messages:
+    - role: "user"
+      content: '"""{"Ticket ID": "1890051", "Service_Category": "New Issues", "Incident_Category": "Domestic - T2S", "Cause_Category": "Code eligibility", "Initial eMail": "Please set up isin FR0128465491 at clearstream, with the option to bridge to euroclear\nWe are C12345\nRegards"}"""'
